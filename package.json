@@ -1,0 +1,27 @@
+{
+  "name": "tabletop",
+  "version": "0.0.1",
+  "description":
+    "Trying to come up with a simple but useful tabletop simulation or sandbox.  \r This is an attempt to create an engine akin to the lovely\r [tabletopia](https://tabletopia.com/) and\r [tabletop simulator](http://store.steampowered.com/app/286160/Tabletop_Simulator/).",
+  "main": "src/main.js",
+  "scripts": {
+    "build": "browserify src/main.js > dist/bundle.js",
+    "test": "jest",
+    "lint": "eslint src/* src/content/*"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "browserify": "^14.5.0",
+    "eslint": "^4.10.0",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-config-prettier": "^2.7.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-jest": "^21.2.0",
+    "jest": "^21.2.1"
+  },
+  "dependencies": {
+    "robust-point-in-polygon": "^1.0.3",
+    "simple-peer": "^8.1.1"
+  }
+}
