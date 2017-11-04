@@ -1,11 +1,11 @@
 {
   "name": "tabletop",
   "version": "0.0.1",
-  "description":
-    "Trying to come up with a simple but useful tabletop simulation or sandbox.  \r This is an attempt to create an engine akin to the lovely\r [tabletopia](https://tabletopia.com/) and\r [tabletop simulator](http://store.steampowered.com/app/286160/Tabletop_Simulator/).",
+  "description": "tabletop simulator/sandbox in js rendered with canvas",
   "main": "src/main.js",
   "scripts": {
-    "build": "browserify src/main.js > dist/bundle.js",
+    "start": "budo src/main.js:dist/bundle.js --live --open",
+    "build": "browserify src/main.js -o dist/bundle.js",
     "test": "jest",
     "lint": "eslint src/* src/content/*"
   },
@@ -13,6 +13,7 @@
   "license": "ISC",
   "devDependencies": {
     "browserify": "^14.5.0",
+    "budo": "^10.0.4",
     "eslint": "^4.10.0",
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-config-prettier": "^2.7.0",

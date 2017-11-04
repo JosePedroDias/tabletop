@@ -6,11 +6,11 @@ const utils = require('./utils');
 const { menu } = require('./arcMenu');
 const { render, W, H } = require('./render');
 
-const card = require('./content/card');
-const counter = require('./content/counter');
-const dice = require('./content/dice');
-const label = require('./content/label');
-const piece = require('./content/piece');
+const card = require('./content/card')(random);
+const counter = require('./content/counter')(random);
+const dice = require('./content/dice')(random);
+const label = require('./content/label')(random);
+const piece = require('./content/piece')(random);
 
 let SHIFT_IS_DOWN = false;
 
@@ -318,10 +318,10 @@ function _onMenuDone(parts) {
         }
         break;
       case 'add label':
-        o = label.create({ text: window.prompt('label text?', '') });
+        o = label.create({ text: b });
         break;
       case 'add counter':
-        o = counter.create();
+        o = counter.create({ value: c });
         break;
       default:
         console.warn('unsupported', a);

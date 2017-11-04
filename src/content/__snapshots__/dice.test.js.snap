@@ -1,0 +1,106 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`dice actions roll() 1`] = `
+Object {
+  "data": Object {
+    "color": "red",
+    "face": "4",
+  },
+  "image": "assets/gfx/dices/red/4.png",
+}
+`;
+
+exports[`dice actions roll() 2`] = `
+Object {
+  "data": Object {
+    "color": "white",
+    "face": "2",
+  },
+  "image": "assets/gfx/dices/white/2.png",
+}
+`;
+
+exports[`dice actions roll() 3`] = `
+Object {
+  "data": Object {
+    "color": "red",
+    "face": "5",
+  },
+  "image": "assets/gfx/dices/red/5.png",
+}
+`;
+
+exports[`dice actions setFace() 1`] = `
+Object {
+  "data": Object {
+    "color": "red",
+    "face": "1",
+  },
+  "image": "assets/gfx/dices/red/1.png",
+}
+`;
+
+exports[`dice actions setFace() 2`] = `
+Object {
+  "data": Object {
+    "color": "white",
+    "face": "2",
+  },
+  "image": "assets/gfx/dices/white/2.png",
+}
+`;
+
+exports[`dice actions setFace() 3`] = `
+Object {
+  "data": Object {
+    "color": "red",
+    "face": "3",
+  },
+  "image": "assets/gfx/dices/red/3.png",
+}
+`;
+
+exports[`dice create validate structure 1`] = `
+Object {
+  "data": Object {
+    "color": "red",
+    "face": "2",
+  },
+  "dimensions": Array [
+    64,
+    64,
+  ],
+  "image": "assets/gfx/dices/red/2.png",
+  "kind": "dice",
+}
+`;
+
+exports[`dice create validate structure 2`] = `
+Object {
+  "data": Object {
+    "color": "white",
+    "face": "6",
+  },
+  "dimensions": Array [
+    64,
+    64,
+  ],
+  "image": "assets/gfx/dices/white/6.png",
+  "kind": "dice",
+}
+`;
+
+exports[`dice create validate structure 3`] = `
+Object {
+  "data": Object {
+    "color": "red",
+    "face": "5",
+  },
+  "dimensions": Array [
+    64,
+    64,
+  ],
+  "image": "assets/gfx/dices/red/5.png",
+  "kind": "dice",
+}
+`;

@@ -1,0 +1,94 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`card actions flip() 1`] = `
+Object {
+  "data": Object {
+    "isFlipped": true,
+    "isJoker": false,
+    "suite": undefined,
+    "value": "4",
+  },
+  "image": "assets/gfx/cards/back_red.png",
+  "image2": "assets/gfx/cards/h4.png",
+}
+`;
+
+exports[`card actions flip() 2`] = `
+Object {
+  "data": Object {
+    "isFlipped": true,
+    "isJoker": false,
+    "suite": undefined,
+    "value": "9",
+  },
+  "image": "assets/gfx/cards/back_blue.png",
+  "image2": "assets/gfx/cards/s9.png",
+}
+`;
+
+exports[`card actions flip() 3`] = `
+Object {
+  "data": Object {
+    "isFlipped": false,
+    "isJoker": false,
+    "suite": undefined,
+    "value": "a",
+  },
+  "image": "assets/gfx/cards/sa.png",
+  "image2": "assets/gfx/cards/back_red.png",
+}
+`;
+
+exports[`card create validate structure 1`] = `
+Object {
+  "data": Object {
+    "isFlipped": false,
+    "isJoker": false,
+    "suit": "h",
+    "value": "4",
+  },
+  "dimensions": Array [
+    140,
+    190,
+  ],
+  "image": "assets/gfx/cards/h4.png",
+  "image2": "assets/gfx/cards/back_red.png",
+  "kind": "card",
+}
+`;
+
+exports[`card create validate structure 2`] = `
+Object {
+  "data": Object {
+    "isFlipped": false,
+    "isJoker": false,
+    "suit": "s",
+    "value": "9",
+  },
+  "dimensions": Array [
+    140,
+    190,
+  ],
+  "image": "assets/gfx/cards/s9.png",
+  "image2": "assets/gfx/cards/back_blue.png",
+  "kind": "card",
+}
+`;
+
+exports[`card create validate structure 3`] = `
+Object {
+  "data": Object {
+    "isFlipped": true,
+    "isJoker": false,
+    "suit": "s",
+    "value": "a",
+  },
+  "dimensions": Array [
+    140,
+    190,
+  ],
+  "image": "assets/gfx/cards/back_red.png",
+  "image2": "assets/gfx/cards/sa.png",
+  "kind": "card",
+}
+`;
