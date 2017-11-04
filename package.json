@@ -4,8 +4,8 @@
   "description": "tabletop simulator/sandbox in js rendered with canvas",
   "main": "src/main.js",
   "scripts": {
-    "start": "budo src/main.js:dist/bundle.js --live --open",
-    "build": "browserify src/main.js -o dist/bundle.js",
+    "start": "budo src/client/main.js:dist/client.js --live --open",
+    "build": "browserify src/client/main.js -o dist/client.js",
     "test": "jest",
     "lint": "eslint src/* src/content/*"
   },
@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "robust-point-in-polygon": "^1.0.3",
-    "simple-peer": "^8.1.1"
+    "signalhub": "^4.9.0",
+    "webrtc-swarm": "^2.9.0"
   }
 }

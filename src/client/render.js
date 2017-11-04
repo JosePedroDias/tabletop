@@ -1,4 +1,4 @@
-const collision = require('./collision');
+const collision = require('../shared/collision');
 
 const DEG2RAD = Math.PI / 180;
 const BG_COLOR = '#060';
@@ -23,12 +23,19 @@ function fixQuadOrder(quad) {
   ];
 }
 
-function render({ objects, quad = undefined }) {
+function select(objects, quad) {
+  quad = fixQuadOrder(quad);
+  SELECTED_OBJECTS = objects.filter(o => {
+    return quad && collision.pointInRect(o.position, quad);
+  });
+}
+
+function render(objects) {
   let didRender = true;
 
   function tryRerender() {
     if (PENDING_IMAGES === 0) {
-      render({ objects, quad });
+      render(objects);
     }
   }
 
@@ -36,16 +43,6 @@ function render({ objects, quad = undefined }) {
   ctx.globalAlpha = 1;
   ctx.fillStyle = BG_COLOR;
   ctx.fillRect(0, 0, W, H);
-
-  let q0, q1;
-  if (quad) {
-    quad = fixQuadOrder(quad);
-    [q0, q1] = quad;
-  }
-
-  if (quad) {
-    SELECTED_OBJECTS = [];
-  }
 
   objects.forEach(o => {
     const imgUrl = o.image;
@@ -59,7 +56,6 @@ function render({ objects, quad = undefined }) {
         imgEl2.src = imgUrl;
         ++PENDING_IMAGES;
         imgEl2.onload = () => {
-          // console.log("loaded %s", imgUrl);
           --PENDING_IMAGES;
           tryRerender();
         };
@@ -79,7 +75,7 @@ function render({ objects, quad = undefined }) {
       }
     }
 
-    const isSelected = quad && collision.pointInRect(o.position, quad);
+    const isSelected = SELECTED_OBJECTS.indexOf(o) !== -1;
 
     if (isSelected) {
       ctx.strokeStyle = '#F0F';
@@ -89,7 +85,6 @@ function render({ objects, quad = undefined }) {
       poly.forEach((p, i) => ctx[i === 0 ? 'moveTo' : 'lineTo'](p[0], p[1]));
       ctx.lineTo(poly[0][0], poly[0][1]);
       ctx.stroke();
-      SELECTED_OBJECTS.push(o);
     }
 
     ctx.save();
@@ -118,6 +113,11 @@ function render({ objects, quad = undefined }) {
     ctx.restore();
   });
 
+  return didRender;
+}
+
+function renderSelectionBox(quad) {
+  const [q0, q1] = quad;
   if (quad && q0) {
     ctx.globalAlpha = 0.5;
     ctx.lineWidth = 3;
@@ -127,22 +127,12 @@ function render({ objects, quad = undefined }) {
     ctx.stroke();
     ctx.globalAlpha = 1;
   }
-
-  // console.log(SELECTED_OBJECTS);
-
-  // console.log("didRender? %s", didRender);
-
-  /* console.log(
-      "render %s %s",
-      new Date().valueOf(),
-      q0 ? "w/quad" : "wo/quad"
-    ); */
-
-  return didRender;
 }
 
 module.exports = {
   render,
+  select,
+  renderSelectionBox,
   ctx,
   W,
   H

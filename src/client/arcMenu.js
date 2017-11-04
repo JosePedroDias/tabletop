@@ -1,6 +1,6 @@
-const collision = require('./collision');
+const collision = require('../shared/collision');
 const render = require('./render');
-const utils = require('./utils');
+const utils = require('../shared/utils');
 
 const PI2 = Math.PI * 2;
 

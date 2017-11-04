@@ -43,11 +43,21 @@ function keepBetween(v, m, M) {
   return v;
 }
 
+function promptValue(v = '') {
+  return window.prompt('value?', v);
+}
+
+function promptNumber(v = 0) {
+  return parseFloat(window.prompt('value?', v));
+}
+
 module.exports = {
   seq,
   repeatString,
   zeroPad,
   getSearch,
   getScroll,
-  keepBetween
+  keepBetween,
+  promptValue,
+  promptNumber
 };

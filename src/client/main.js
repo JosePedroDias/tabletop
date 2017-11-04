@@ -1,54 +1,38 @@
-const SimplePeer = require('simple-peer');
-
-const collision = require('./collision');
-const random = require('./random').default;
-const utils = require('./utils');
+const collision = require('../shared/collision');
+const random = require('../shared/random').default;
+const utils = require('../shared//utils');
 const { menu } = require('./arcMenu');
-const { render, W, H } = require('./render');
+const { render, select, renderSelectionBox, W, H } = require('./render');
 
-const card = require('./content/card')(random);
-const counter = require('./content/counter')(random);
-const dice = require('./content/dice')(random);
-const label = require('./content/label')(random);
-const piece = require('./content/piece')(random);
+const card = require('../shared/content/card')(random);
+const counter = require('../shared/content/counter')(random);
+const dice = require('../shared/content/dice')(random);
+const label = require('../shared/content/label')(random);
+const piece = require('../shared/content/piece')(random);
+
+const p2p = require('./p2pfake')(
+  'tabletop-experimental',
+  'https://signalhub-jccqtwhdwc.now.sh'
+);
+
+window.p2p = p2p;
+
+p2p.on('connect', () => {
+  publishEvent({ type: 'opponentName', data: SEARCH.me || random.id(6) });
+});
+
+p2p.on('data', (id, data) => {
+  console.log(id, data);
+  const ev = JSON.parse(data);
+  // console.log("data", ev);
+  actOnEvent(ev);
+});
 
 let SHIFT_IS_DOWN = false;
 
 const SEARCH = utils.getSearch();
 
 // console.log("search", SEARCH);
-
-const peer = new SimplePeer({
-  initiator: !!SEARCH.hosting,
-  channelName: 'tabletop',
-  trickle: false
-});
-let ready = false;
-
-peer.on('signal', signal => {
-  window.prompt(
-    'share this signal with your friend and dismiss this',
-    JSON.stringify(signal)
-  );
-});
-
-peer.on('connect', () => {
-  ready = true;
-  console.log('connected!');
-  setup.style.display = 'none';
-  publishEvent({ type: 'opponentName', data: SEARCH.me || random.id(6) }); // to resume pending stuff
-});
-
-peer.on('data', data => {
-  ready = true;
-  const ev = JSON.parse(data);
-  // console.log("data", ev);
-  actOnEvent(ev);
-});
-
-window.setupOtherSignal = signal => {
-  peer.signal(JSON.parse(signal));
-};
 
 let OBJECTS = [];
 window.OBJECTS = OBJECTS;
@@ -70,7 +54,7 @@ function addObject(o) {
     o.id = random.id(6);
   }
   OBJECTS.push(o);
-  render({ objects: OBJECTS });
+  render(OBJECTS);
 
   if (!isForeign) {
     publishEvent({
@@ -78,6 +62,8 @@ function addObject(o) {
       data: o
     });
   }
+
+  return o.id;
 }
 
 function updateObject(id, partialO) {
@@ -89,7 +75,7 @@ function updateObject(id, partialO) {
   for (const k in partialO) {
     o[k] = partialO[k];
   }
-  render({ objects: OBJECTS });
+  render(OBJECTS);
 
   if (!isForeign) {
     publishEvent({
@@ -107,7 +93,7 @@ function changeObjectIndex(id, index) {
   }
   OBJECTS.splice(pair[1], 1);
   OBJECTS.splice(index, 0, pair[0]);
-  render({ objects: OBJECTS });
+  render(OBJECTS);
 
   if (!isForeign) {
     publishEvent({
@@ -124,7 +110,7 @@ function removeObject(id) {
     return;
   }
   OBJECTS.splice(pair[1], 1);
-  render({ objects: OBJECTS });
+  render(OBJECTS);
 
   if (!isForeign) {
     publishEvent({
@@ -158,7 +144,7 @@ function actOnEvent(ev) {
     case 'allObjects': // to apply resync from other
       OBJECTS = ev.data;
       window.OBJECTS = OBJECTS;
-      render({ objects: OBJECTS });
+      render(OBJECTS);
       break;
     case 'opponentName':
       console.log('Other user is named %s', ev.data);
@@ -172,20 +158,20 @@ function actOnEvent(ev) {
 const pendingEvents = [];
 function publishEvent(ev) {
   ev = JSON.stringify(ev);
-  if (!ready) {
+  if (!p2p.isReady) {
     // console.warn("delaying ev", ev);
     return pendingEvents.push(ev);
   }
   while (pendingEvents.length) {
     const ev0 = pendingEvents.shift();
     // console.warn("senting delayed ev", ev0);
-    peer.send(ev0);
+    p2p.broadcast(ev0);
   }
   if (!ev) {
     return;
   }
   // console.warn("senting ev", ev);
-  peer.send(ev);
+  p2p.broadcast(ev);
 }
 
 if (SEARCH.hosting) {
@@ -205,7 +191,7 @@ if (SEARCH.hosting) {
     });
   });
 }
-render({ objects: OBJECTS });
+render(OBJECTS);
 
 function _getPoint(ev) {
   const scroll = utils.getScroll();
@@ -219,121 +205,115 @@ let selectedObj, menuObj;
 let firstP, lastP, menuP;
 
 function onMenuDone(parts) {
+  if (!parts) {
+    return render(OBJECTS);
+  }
+  console.log(parts);
+
   // console.warn(parts);
-  if (SELECTED_OBJECTS.length === 0) {
-    menuObj = undefined;
-    _onMenuDone(parts);
-    return;
+  if (SELECTED_OBJECTS.length === 0 && !menuObj) {
+    return createAction(parts);
+  }
+  if (menuObj && SELECTED_OBJECTS.length === 0) {
+    return changeAction(menuObj, parts);
   }
   SELECTED_OBJECTS.forEach(o => {
-    menuObj = o;
-    _onMenuDone(parts);
+    changeAction(o, parts);
   });
 }
 
-function _onMenuDone(parts) {
-  if (!parts) {
-    return render({ objects: OBJECTS });
-  }
-  console.warn(parts);
+function createAction(parts) {
   const [a, b, c, d] = parts;
-  if (menuObj) {
-    const o = menuObj;
+  let o;
 
-    if (a === 'remove') {
-      removeObject(o.id);
-    } else {
-      switch (o.kind) {
-        case 'dice':
-          if (a === 'roll') {
-            updateObject(o.id, dice.roll(o));
-          } else {
-            updateObject(o.id, dice.setFace(o, b));
-          }
+  switch (a) {
+    case 'add piece':
+      if (c === 'random') {
+        o = piece.create({ color: b });
+      } else {
+        o = piece.create({ color: b, index: d });
+      }
+      break;
+    case 'add dice':
+      if (b === 'roll') {
+        o = dice.create();
+      } else {
+        o = dice.create({ face: c });
+      }
+      break;
+    case 'add card':
+      if (b === 'joker') {
+        o = card.create({ isJoker: true });
+      } else {
+        o = card.create({
+          suit: c[0],
+          value: d.toLowerCase()
+        });
+      }
+      break;
+    case 'add label':
+      o = label.create({ text: b });
+      break;
+    case 'add counter':
+      o = counter.create({ value: c });
+      break;
+    default:
+      console.warn('unsupported', a);
+  }
+  if (o) {
+    o.scale = 0.5;
+    o.position = menuP.slice();
+    const pair = _findObjectById(addObject(o));
+    console.log('added', pair[0]);
+  }
+}
+
+function changeAction(o, parts) {
+  const [a, b] = parts;
+
+  if (a === 'remove') {
+    const pair = _findObjectById(o.id);
+    console.log('remove', pair[0]);
+    removeObject(o.id);
+  } else {
+    if (o.kind === 'dice') {
+      if (a === 'roll') {
+        updateObject(o.id, dice.roll(o));
+      } else {
+        // a === 'set face'
+        updateObject(o.id, dice.setFace(o, b));
+      }
+    } else if (o.kind === 'card') {
+      updateObject(o.id, card.flip(o));
+    } else if (o.kind === 'label') {
+      updateObject(o.id, label.setText(utils.promptValue(o.data.text)));
+    } else if (o.kind === 'counter') {
+      let v;
+      switch (a) {
+        case '+1':
+          v = counter.increment(o);
           break;
-        case 'card':
-          updateObject(o.id, card.flip(o));
+        case '-1':
+          v = counter.increment(o, -1);
           break;
-        case 'label':
-          updateObject(
-            o.id,
-            label.setText(window.prompt('text to set?', o.data.text))
-          );
+        case '=0':
+          v = counter.reset(o);
           break;
-        case 'counter':
-          {
-            let v;
-            switch (a) {
-              case '+1':
-                v = counter.increment(o);
-                break;
-              case '-1':
-                v = counter.increment(o, -1);
-                break;
-              case '=0':
-                v = counter.reset(o);
-                break;
-              case 'add value':
-                v = counter.increment(o, parseFloat(b));
-                break;
-              case 'set value':
-                v = counter.setValue(o, parseFloat(b));
-                break;
-              default:
-                console.warn('unsupported', o.kind);
-            }
-            updateObject(o.id, v);
-          }
+        case 'add value':
+          v = counter.increment(o, b);
+          break;
+        case 'set value':
+          v = counter.setValue(o, b);
           break;
         default:
           console.warn('unsupported', o.kind);
       }
-    }
-    console.log(o);
-  } else {
-    let o;
-    switch (a) {
-      case 'add piece':
-        if (c === 'random') {
-          o = piece.create({ color: b });
-        } else {
-          o = piece.create({ color: b, index: d });
-        }
-        break;
-      case 'add dice':
-        if (b === 'roll') {
-          o = dice.create();
-        } else {
-          o = dice.create({ face: c });
-        }
-        break;
-      case 'add card':
-        if (b === 'joker') {
-          o = card.create({ isJoker: true });
-        } else {
-          o = card.create({
-            suit: c[0],
-            value: d.toLowerCase()
-          });
-        }
-        break;
-      case 'add label':
-        o = label.create({ text: b });
-        break;
-      case 'add counter':
-        o = counter.create({ value: c });
-        break;
-      default:
-        console.warn('unsupported', a);
-    }
-    if (o) {
-      o.scale = 0.5;
-      o.position = menuP.slice();
-      console.warn(o);
-      addObject(o);
+      updateObject(o.id, v);
+    } else {
+      console.warn('unsupported type', o.type);
     }
   }
-  render({ objects: OBJECTS });
+  console.log('change', o);
 }
 
 document.addEventListener('keydown', ev => {
@@ -383,24 +363,8 @@ document.addEventListener('mousedown', ev => {
             ]
           ]
         ],
-        [
-          'add label',
-          function getText() {
-            return window.prompt('text?', '');
-          }
-        ],
-        [
-          'add counter',
-          [
-            'with 0',
-            [
-              'with value',
-              function getValue() {
-                return parseInt(window.prompt('value?', ''), 10);
-              }
-            ]
-          ]
-        ]
+        ['add label', utils.promptValue],
+        ['add counter', ['with 0', ['with value', utils.promptNumber]]]
       ];
     } else {
       switch (menuObj.kind) {
@@ -417,7 +381,14 @@ document.addEventListener('mousedown', ev => {
           opts = ['remove', 'set text'];
           break;
         case 'counter':
-          opts = ['remove', '=0', '+1', '-1', 'add value', 'set value'];
+          opts = [
+            'remove',
+            '=0',
+            '+1',
+            '-1',
+            ['add value', utils.promptNumber],
+            ['set value', utils.promptNumber]
+          ];
           break;
         default:
           console.warn('unsupported', menuObj.kind);
@@ -452,7 +423,10 @@ document.addEventListener('mousemove', ev => {
   const p = _getPoint(ev);
 
   if (firstP && SHIFT_IS_DOWN) {
-    render({ objects: OBJECTS, quad: [firstP, p] });
+    const quad = [firstP, p];
+    select(OBJECTS, quad);
+    render(OBJECTS);
+    renderSelectionBox(quad);
     lastP = p;
     return;
   }
@@ -463,9 +437,7 @@ document.addEventListener('mousemove', ev => {
     o.position[0] += dP[0];
     o.position[1] += dP[1];
   });
-  render({
-    objects: OBJECTS
-  });
+  render(OBJECTS);
 });
 
 document.addEventListener('mouseup', ev => {
@@ -479,18 +451,18 @@ document.addEventListener('mouseup', ev => {
     selectedObj.position[0] += dP[0];
     selectedObj.position[1] += dP[1];
 
+    // SELECTED_OBJECTS = [];
+
     updateObject(selectedObj.id, {
       position: selectedObj.position.slice()
     });
   } else {
-    // render({objects:OBJECTS, quad:[firstP, p]});
+    // SELECTED_OBJECTS = [];
   }
 
   selectedObj = undefined;
   firstP = undefined;
   lastP = undefined;
-
-  // console.log("done");
 });
 
 document.addEventListener('contextmenu', ev => {
