@@ -25,17 +25,17 @@ function fixQuadOrder(quad) {
 
 function select(objects, quad) {
   quad = fixQuadOrder(quad);
-  SELECTED_OBJECTS = objects.filter(o => {
+  return objects.filter(o => {
     return quad && collision.pointInRect(o.position, quad);
   });
 }
 
-function render(objects) {
+function render(objects, selectedObjects) {
   let didRender = true;
 
   function tryRerender() {
     if (PENDING_IMAGES === 0) {
-      render(objects);
+      render(objects, selectedObjects);
     }
   }
 
@@ -75,7 +75,7 @@ function render(objects) {
       }
     }
 
-    const isSelected = SELECTED_OBJECTS.indexOf(o) !== -1;
+    const isSelected = selectedObjects.indexOf(o) !== -1;
 
     if (isSelected) {
       ctx.strokeStyle = '#F0F';

@@ -29,6 +29,9 @@ function arcMenu(OPTS) {
   }
 
   function onDown(ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+
     const scroll = utils.getScroll();
     const p = [ev.clientX - scroll[0], ev.clientY - scroll[1]];
     const idx = collision.collidePolysPoint(polys, p);

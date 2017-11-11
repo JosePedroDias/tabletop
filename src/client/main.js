@@ -16,8 +16,6 @@ const p2p = require('./p2pfake')(
   'https://acor.sl.pt:444'
 );
 
-window.p2p = p2p;
-
 p2p.on('connect', () => {
   publishEvent({ type: 'opponentName', data: SEARCH.me || random.id(6) });
 });
@@ -36,8 +34,7 @@ const SEARCH = utils.getSearch();
 // console.log("search", SEARCH);
 
 let OBJECTS = [];
-window.OBJECTS = OBJECTS;
-window.SELECTED_OBJECTS = [];
+let SELECTED_OBJECTS = [];
 
 function _findObjectById(id) {
   for (let i = OBJECTS.length - 1; i >= 0; --i) {
@@ -55,7 +52,7 @@ function addObject(o) {
     o.id = random.id(6);
   }
   OBJECTS.push(o);
-  render(OBJECTS);
+  render(OBJECTS, SELECTED_OBJECTS);
 
   if (!isForeign) {
     publishEvent({
@@ -76,7 +73,7 @@ function updateObject(id, partialO) {
   for (const k in partialO) {
     o[k] = partialO[k];
   }
-  render(OBJECTS);
+  render(OBJECTS, SELECTED_OBJECTS);
 
   if (!isForeign) {
     publishEvent({
@@ -94,7 +91,7 @@ function changeObjectIndex(id, index) {
   }
   OBJECTS.splice(pair[1], 1);
   OBJECTS.splice(index, 0, pair[0]);
-  render(OBJECTS);
+  render(OBJECTS, SELECTED_OBJECTS);
 
   if (!isForeign) {
     publishEvent({
@@ -111,7 +108,7 @@ function removeObject(id) {
     return;
   }
   OBJECTS.splice(pair[1], 1);
-  render(OBJECTS);
+  render(OBJECTS, SELECTED_OBJECTS);
 
   if (!isForeign) {
     publishEvent({
@@ -144,8 +141,7 @@ function actOnEvent(ev) {
       break;
     case 'allObjects': // to apply resync from other
       OBJECTS = ev.data;
-      window.OBJECTS = OBJECTS;
-      render(OBJECTS);
+      render(OBJECTS, SELECTED_OBJECTS);
       break;
     case 'opponentName':
       console.log('Other user is named %s', ev.data);
@@ -192,7 +188,7 @@ if (SEARCH.hosting) {
     });
   });
 }
-render(OBJECTS);
+render(OBJECTS, SELECTED_OBJECTS);
 
 function _getPoint(ev) {
   const scroll = utils.getScroll();
@@ -202,25 +198,22 @@ function _getPoint(ev) {
   ];
 }
 
-let selectedObj, menuObj;
+let selectedObj;
 let firstP, lastP, menuP;
 
 function onMenuDone(parts) {
-  if (!parts) {
-    return render(OBJECTS);
-  }
-  console.log(parts);
+  // console.log(parts);
 
-  // console.warn(parts);
-  if (SELECTED_OBJECTS.length === 0 && !menuObj) {
-    return createAction(parts);
+  if (!parts) {
+    render(OBJECTS, SELECTED_OBJECTS);
+  } else if (SELECTED_OBJECTS.length === 0) {
+    createAction(parts);
+  } else {
+    SELECTED_OBJECTS.forEach(o => {
+      changeAction(o, parts);
+    });
   }
-  if (menuObj && SELECTED_OBJECTS.length === 0) {
-    return changeAction(menuObj, parts);
-  }
-  SELECTED_OBJECTS.forEach(o => {
-    changeAction(o, parts);
-  });
+  menuP = undefined;
 }
 
 function createAction(parts) {
@@ -317,6 +310,58 @@ function changeAction(o, parts) {
   console.log('change', o);
 }
 
+function menuNew() {
+  return [
+    [
+      'add piece',
+      piece.COLORS.map(color => [
+        color,
+        ['random', ['with index', piece.INDICES]]
+      ])
+    ],
+
+    ['add dice', ['roll', ['with value', dice.FACES]]],
+    [
+      'add card',
+      [
+        'joker',
+        [
+          'with suit',
+          [
+            ['hearts', card.VALUES],
+            ['diamonds', card.VALUES],
+            ['clubs', card.VALUES],
+            ['spades', card.VALUES]
+          ]
+        ]
+      ]
+    ],
+    ['add label', utils.promptValue],
+    ['add counter', ['with 0', ['with value', utils.promptNumber]]]
+  ];
+}
+
+function menuExisting(obj) {
+  if (obj.kind === 'dice') {
+    return ['remove', 'roll', ['set value', dice.FACES]];
+  } else if (obj.kind === 'card') {
+    return ['remove', 'flip'];
+  } else if (obj.kind === 'piece') {
+    return ['remove'];
+  } else if (obj.kind === 'label') {
+    return ['remove', 'set text'];
+  } else if (obj.kind === 'counter') {
+    return [
+      'remove',
+      '=0',
+      '+1',
+      '-1',
+      ['add value', utils.promptNumber],
+      ['set value', utils.promptNumber]
+    ];
+  }
+}
+
 document.addEventListener('keydown', ev => {
   SHIFT_IS_DOWN = ev.shiftKey;
 });
@@ -326,77 +371,21 @@ document.addEventListener('keyup', ev => {
 });
 
 document.addEventListener('mousedown', ev => {
+  if (menuP) {
+    return;
+  }
+
   ev.preventDefault();
   ev.stopPropagation();
 
   const p = _getPoint(ev);
   selectedObj = collision.collideObjectsPoint(OBJECTS, p);
-  console.log('selectedObj', selectedObj);
+  // console.log('selectedObj', selectedObj);
 
   if (ev.button === 2) {
-    menuObj = selectedObj;
     menuP = p;
-    let opts;
-
-    if (!menuObj) {
-      opts = [
-        [
-          'add piece',
-          piece.COLORS.map(color => [
-            color,
-            ['random', ['with index', piece.INDICES]]
-          ])
-        ],
-
-        ['add dice', ['roll', ['with value', dice.FACES]]],
-        [
-          'add card',
-          [
-            'joker',
-            [
-              'with suit',
-              [
-                ['hearts', card.VALUES],
-                ['diamonds', card.VALUES],
-                ['clubs', card.VALUES],
-                ['spades', card.VALUES]
-              ]
-            ]
-          ]
-        ],
-        ['add label', utils.promptValue],
-        ['add counter', ['with 0', ['with value', utils.promptNumber]]]
-      ];
-    } else {
-      switch (menuObj.kind) {
-        case 'dice':
-          opts = ['remove', 'roll', ['set value', dice.FACES]];
-          break;
-        case 'card':
-          opts = ['remove', 'flip'];
-          break;
-        case 'piece':
-          opts = ['remove'];
-          break;
-        case 'label':
-          opts = ['remove', 'set text'];
-          break;
-        case 'counter':
-          opts = [
-            'remove',
-            '=0',
-            '+1',
-            '-1',
-            ['add value', utils.promptNumber],
-            ['set value', utils.promptNumber]
-          ];
-          break;
-        default:
-          console.warn('unsupported', menuObj.kind);
-      }
-    }
-
-    if (opts) {
+    const opts = selectedObj ? menuExisting(selectedObj) : menuNew();
+    if (opts && opts.length > 0) {
       menu({
         center: p,
         options: opts,
@@ -409,11 +398,18 @@ document.addEventListener('mousedown', ev => {
 
   lastP = p;
 
-  if (selectedObj && SELECTED_OBJECTS.length === 0) {
+  if (
+    selectedObj &&
+    (SELECTED_OBJECTS.length === 0 ||
+      SELECTED_OBJECTS.indexOf(selectedObj) === -1)
+  ) {
     changeObjectIndex(selectedObj.id, OBJECTS.length - 1);
     SELECTED_OBJECTS = [selectedObj];
   } else if (SHIFT_IS_DOWN) {
     firstP = p;
+  } else if (!selectedObj) {
+    SELECTED_OBJECTS = [];
+    render(OBJECTS, SELECTED_OBJECTS);
   }
 });
 
@@ -425,8 +421,8 @@ document.addEventListener('mousemove', ev => {
 
   if (firstP && SHIFT_IS_DOWN) {
     const quad = [firstP, p];
-    select(OBJECTS, quad);
-    render(OBJECTS);
+    SELECTED_OBJECTS = select(OBJECTS, quad);
+    render(OBJECTS, SELECTED_OBJECTS);
     renderSelectionBox(quad);
     lastP = p;
     return;
@@ -438,7 +434,7 @@ document.addEventListener('mousemove', ev => {
     o.position[0] += dP[0];
     o.position[1] += dP[1];
   });
-  render(OBJECTS);
+  render(OBJECTS, SELECTED_OBJECTS);
 });
 
 document.addEventListener('mouseup', ev => {
@@ -452,13 +448,9 @@ document.addEventListener('mouseup', ev => {
     selectedObj.position[0] += dP[0];
     selectedObj.position[1] += dP[1];
 
-    // SELECTED_OBJECTS = [];
-
     updateObject(selectedObj.id, {
       position: selectedObj.position.slice()
     });
-  } else {
-    // SELECTED_OBJECTS = [];
   }
 
   selectedObj = undefined;
