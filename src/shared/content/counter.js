@@ -1,5 +1,9 @@
 const defaultObject = require('./default');
 
+const utils = require('../utils');
+
+// FACTORY
+
 function factory(/* random */) {
   function create({ value = 0, color = '#FFF' } = {}) {
     const o = {
@@ -14,6 +18,8 @@ function factory(/* random */) {
 
     return o;
   }
+
+  // ACTIONS
 
   function setValue(o, value) {
     return {
@@ -35,11 +41,59 @@ function factory(/* random */) {
     return setValue(o, 0);
   }
 
+  // OPTIONS
+
+  function newOptions() {
+    return ['add counter', ['with 0', ['with value', utils.promptNumber]]];
+  }
+
+  function existingOptions(objs) {
+    if (objs.every(o => o.kind === 'counter')) {
+      return [
+        '=0',
+        '+1',
+        '-1',
+        ['add value', utils.promptNumber],
+        ['set value', utils.promptNumber]
+      ];
+    }
+  }
+
+  // ON OPTIONS
+
+  function onMenuNew(a, b, c /* , d */) {
+    if (a === 'add counter') {
+      return create({ value: c });
+    }
+  }
+
+  function onMenuExisting(o, a, b) {
+    if (o.kind === 'counter') {
+      switch (a) {
+        case '+1':
+          return increment(o);
+        case '-1':
+          return increment(o, -1);
+        case '=0':
+          return reset(o);
+        case 'add value':
+          return increment(o, b);
+        case 'set value':
+          return setValue(o, b);
+        default:
+      }
+    }
+  }
+
   return {
     create,
     setValue,
     increment,
-    reset
+    reset,
+    newOptions,
+    existingOptions,
+    onMenuNew,
+    onMenuExisting
   };
 }
 

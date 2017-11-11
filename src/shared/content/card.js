@@ -1,10 +1,14 @@
 const defaultObject = require('./default');
 
+// CONSTS
+
 const SUITS = 'hdcs'.split('');
 
 const VALUES = '2 3 4 5 6 7 8 9 10 j q k a'.split(' ');
 
 const BACKS = 'blue green red'.split(' ');
+
+// FACTORY
 
 function factory(random) {
   function create(
@@ -43,6 +47,8 @@ function factory(random) {
     return o;
   }
 
+  // ACTIONS
+
   function flip(o) {
     return {
       image: o.image2,
@@ -56,9 +62,59 @@ function factory(random) {
     };
   }
 
+  // OPTIONS
+
+  function newOptions() {
+    return [
+      'add card',
+      [
+        'joker',
+        [
+          'with suit',
+          [
+            ['hearts', VALUES],
+            ['diamonds', VALUES],
+            ['clubs', VALUES],
+            ['spades', VALUES]
+          ]
+        ]
+      ]
+    ];
+  }
+
+  function existingOptions(objs) {
+    if (objs.every(o => o.kind === 'card')) {
+      return ['flip'];
+    }
+  }
+
+  // ON OPTIONS
+
+  function onMenuNew(a, b, c, d) {
+    if (a === 'add card') {
+      if (b === 'joker') {
+        return create({ isJoker: true });
+      }
+      return create({
+        suit: c[0],
+        value: d.toLowerCase()
+      });
+    }
+  }
+
+  function onMenuExisting(o /* , a, b */) {
+    if (o.kind === 'card') {
+      return flip(o);
+    }
+  }
+
   return {
     create,
     flip,
+    newOptions,
+    existingOptions,
+    onMenuNew,
+    onMenuExisting,
     BACKS,
     SUITS,
     VALUES

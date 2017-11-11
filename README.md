@@ -21,12 +21,14 @@ I'm trying to depend the very least on both the platform and the language,
 so relying on canvas for rendering. The idea is to be able to port this without much effort.
 
 ## TODO
-* aggregate as group (either temporarily, ex: drag or permanently, ex: stack)
-* action hooks refactored to content modules
-* group ops:
+* group/ungroup (content type)
+* group layout:
   * stack
-  * display horizontally
-  * hand (as if being hold)
+  * hand
+  * horizontal
+* group options
+  * shuffle
+  * show / hide
 * creation actions:
   * add deck (stack of 52 flipped and shuffled cards)
 * zones (bags of objects, aligning positioning by stacking or placing in linear direction)

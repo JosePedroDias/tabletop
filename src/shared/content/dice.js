@@ -1,10 +1,14 @@
 const defaultObject = require('./default');
 
+// CONSTS
+
+const FACES = '1 2 3 4 5 6'.split(' ');
+
+const COLORS = 'red white'.split(' ');
+
+// FACTORY
+
 function factory(random) {
-  const FACES = '1 2 3 4 5 6'.split(' ');
-
-  const COLORS = 'red white'.split(' ');
-
   function create({ face, color } = {}) {
     if (face === undefined) {
       face = random.fromArray(FACES);
@@ -28,6 +32,8 @@ function factory(random) {
     return o;
   }
 
+  // ACTIONS
+
   function setFace(o, face) {
     return {
       image: o.image.replace(`/${o.data.face}.png`, `/${face}.png`),
@@ -39,10 +45,46 @@ function factory(random) {
     return setFace(o, random.fromArray(FACES));
   }
 
+  // OPTIONS
+
+  function newOptions() {
+    return ['add dice', ['roll', ['with value', FACES]]];
+  }
+
+  function existingOptions(objs) {
+    if (objs.every(o => o.kind === 'dice')) {
+      return ['roll', ['set value', FACES]];
+    }
+  }
+
+  // ON OPTIONS
+
+  function onMenuNew(a, b, c /* , d */) {
+    if (a === 'add dice') {
+      if (b === 'roll') {
+        return create();
+      }
+      return create({ face: c });
+    }
+  }
+
+  function onMenuExisting(o, a, b) {
+    if (o.kind === 'dice') {
+      if (a === 'roll') {
+        return roll(o);
+      }
+      return setFace(o, b);
+    }
+  }
+
   return {
     create,
     roll,
     setFace,
+    newOptions,
+    existingOptions,
+    onMenuNew,
+    onMenuExisting,
     COLORS,
     FACES
   };

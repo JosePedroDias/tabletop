@@ -1,6 +1,6 @@
 const collision = require('../shared/collision');
 const random = require('../shared/random').default;
-const utils = require('../shared//utils');
+const utils = require('../shared/utils');
 const { menu } = require('./arcMenu');
 const { render, select, renderSelectionBox, W, H } = require('./render');
 
@@ -9,6 +9,8 @@ const counter = require('../shared/content/counter')(random);
 const dice = require('../shared/content/dice')(random);
 const label = require('../shared/content/label')(random);
 const piece = require('../shared/content/piece')(random);
+
+const contentTypes = [card, dice, piece, counter, label];
 
 const p2p = require('./p2pfake')(
   // p2p | p2pfake
@@ -218,48 +220,18 @@ function onMenuDone(parts) {
 
 function createAction(parts) {
   const [a, b, c, d] = parts;
-  let o;
 
-  switch (a) {
-    case 'add piece':
-      if (c === 'random') {
-        o = piece.create({ color: b });
-      } else {
-        o = piece.create({ color: b, index: d });
-      }
-      break;
-    case 'add dice':
-      if (b === 'roll') {
-        o = dice.create();
-      } else {
-        o = dice.create({ face: c });
-      }
-      break;
-    case 'add card':
-      if (b === 'joker') {
-        o = card.create({ isJoker: true });
-      } else {
-        o = card.create({
-          suit: c[0],
-          value: d.toLowerCase()
-        });
-      }
-      break;
-    case 'add label':
-      o = label.create({ text: b });
-      break;
-    case 'add counter':
-      o = counter.create({ value: c });
-      break;
-    default:
-      console.warn('unsupported', a);
-  }
-  if (o) {
-    o.scale = 0.5;
-    o.position = menuP.slice();
-    const pair = _findObjectById(addObject(o));
-    console.log('added', pair[0]);
-  }
+  contentTypes.some(ct => {
+    const o = ct.onMenuNew(a, b, c, d);
+    if (o) {
+      o.scale = 0.5;
+      o.position = menuP.slice();
+      const pair = _findObjectById(addObject(o));
+      console.log('added', pair[0]);
+      return true;
+    }
+    return false;
+  });
 }
 
 function changeAction(o, parts) {
@@ -269,97 +241,33 @@ function changeAction(o, parts) {
     const pair = _findObjectById(o.id);
     console.log('remove', pair[0]);
     removeObject(o.id);
-  } else {
-    if (o.kind === 'dice') {
-      if (a === 'roll') {
-        updateObject(o.id, dice.roll(o));
-      } else {
-        // a === 'set face'
-        updateObject(o.id, dice.setFace(o, b));
-      }
-    } else if (o.kind === 'card') {
-      updateObject(o.id, card.flip(o));
-    } else if (o.kind === 'label') {
-      updateObject(o.id, label.setText(utils.promptValue(o.data.text)));
-    } else if (o.kind === 'counter') {
-      let v;
-      switch (a) {
-        case '+1':
-          v = counter.increment(o);
-          break;
-        case '-1':
-          v = counter.increment(o, -1);
-          break;
-        case '=0':
-          v = counter.reset(o);
-          break;
-        case 'add value':
-          v = counter.increment(o, b);
-          break;
-        case 'set value':
-          v = counter.setValue(o, b);
-          break;
-        default:
-          console.warn('unsupported', o.kind);
-      }
-      updateObject(o.id, v);
-    } else {
-      console.warn('unsupported type', o.type);
-    }
+    return;
   }
-  console.log('change', o);
+
+  contentTypes.some(ct => {
+    const o2 = ct.onMenuExisting(o, a, b);
+    if (o2) {
+      updateObject(o.id, o2);
+      console.log('change', o);
+      return true;
+    }
+    return false;
+  });
 }
 
 function menuNew() {
-  return [
-    [
-      'add piece',
-      piece.COLORS.map(color => [
-        color,
-        ['random', ['with index', piece.INDICES]]
-      ])
-    ],
-
-    ['add dice', ['roll', ['with value', dice.FACES]]],
-    [
-      'add card',
-      [
-        'joker',
-        [
-          'with suit',
-          [
-            ['hearts', card.VALUES],
-            ['diamonds', card.VALUES],
-            ['clubs', card.VALUES],
-            ['spades', card.VALUES]
-          ]
-        ]
-      ]
-    ],
-    ['add label', utils.promptValue],
-    ['add counter', ['with 0', ['with value', utils.promptNumber]]]
-  ];
+  return contentTypes.reduce((opts, ct) => {
+    const b = opts.slice();
+    b.push(ct.newOptions());
+    return b;
+  }, []);
 }
 
-function menuExisting(obj) {
-  if (obj.kind === 'dice') {
-    return ['remove', 'roll', ['set value', dice.FACES]];
-  } else if (obj.kind === 'card') {
-    return ['remove', 'flip'];
-  } else if (obj.kind === 'piece') {
-    return ['remove'];
-  } else if (obj.kind === 'label') {
-    return ['remove', 'set text'];
-  } else if (obj.kind === 'counter') {
-    return [
-      'remove',
-      '=0',
-      '+1',
-      '-1',
-      ['add value', utils.promptNumber],
-      ['set value', utils.promptNumber]
-    ];
-  }
+function menuExisting(objs) {
+  return contentTypes.reduce(
+    (opts, ct) => opts.concat(ct.existingOptions(objs) || []),
+    ['remove']
+  );
 }
 
 document.addEventListener('keydown', ev => {
@@ -384,7 +292,7 @@ document.addEventListener('mousedown', ev => {
 
   if (ev.button === 2) {
     menuP = p;
-    const opts = selectedObj ? menuExisting(selectedObj) : menuNew();
+    const opts = selectedObj ? menuExisting(SELECTED_OBJECTS) : menuNew();
     if (opts && opts.length > 0) {
       menu({
         center: p,
