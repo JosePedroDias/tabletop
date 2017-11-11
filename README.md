@@ -22,6 +22,7 @@ so relying on canvas for rendering. The idea is to be able to port this without 
 
 ## TODO
 * aggregate as group (either temporarily, ex: drag or permanently, ex: stack)
+* action hooks refactored to content modules
 * group ops:
   * stack
   * display horizontally

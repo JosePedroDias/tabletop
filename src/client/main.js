@@ -11,8 +11,9 @@ const label = require('../shared/content/label')(random);
 const piece = require('../shared/content/piece')(random);
 
 const p2p = require('./p2pfake')(
+  // p2p | p2pfake
   'tabletop-experimental',
-  'https://signalhub-jccqtwhdwc.now.sh'
+  'https://acor.sl.pt:444'
 );
 
 window.p2p = p2p;
@@ -408,7 +409,7 @@ document.addEventListener('mousedown', ev => {
 
   lastP = p;
 
-  if (selectedObj) {
+  if (selectedObj && SELECTED_OBJECTS.length === 0) {
     changeObjectIndex(selectedObj.id, OBJECTS.length - 1);
     SELECTED_OBJECTS = [selectedObj];
   } else if (SHIFT_IS_DOWN) {
