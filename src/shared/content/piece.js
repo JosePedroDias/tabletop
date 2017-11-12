@@ -4,6 +4,8 @@ const utils = require('../utils');
 
 // CONSTS
 
+const KIND = 'piece';
+
 const COLORS = 'black blue green purple red white'.split(' ');
 
 const INDICES = utils.seq(19).map(n => utils.zeroPad(2, n));
@@ -21,7 +23,7 @@ function factory(random) {
     }
 
     const o = {
-      kind: 'piece',
+      kind: KIND,
       image: `assets/gfx/pieces/${color}/${index}.png`,
       dimensions: [64, 64],
       data: {

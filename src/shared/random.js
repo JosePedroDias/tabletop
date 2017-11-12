@@ -1,3 +1,5 @@
+const utils = require('./utils');
+
 const _ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789'.split('');
 
 let _seed = 0x2f6e2b1;
@@ -37,6 +39,24 @@ function generateAPI(rnd) {
       .join('');
   }
 
+  function shuffleIndices(n) {
+    const arr = utils.seq(n);
+    const arr2 = [];
+
+    for (let i = n; i > 0; --i) {
+      const r = int(i);
+      const el = arr.splice(r, 1);
+      arr2.push(el[0]);
+    }
+
+    return arr2;
+  }
+
+  function shuffle(arr) {
+    const indices = shuffleIndices(arr.length);
+    return indices.map(i => arr[i]);
+  }
+
   function setSeed(seed) {
     _seed = seed;
   }
@@ -46,6 +66,8 @@ function generateAPI(rnd) {
     int,
     fromArray,
     id,
+    shuffleIndices,
+    shuffle,
     setSeed
   };
 }

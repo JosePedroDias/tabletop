@@ -2,6 +2,8 @@ const defaultObject = require('./default');
 
 // CONSTS
 
+const KIND = 'dice';
+
 const FACES = '1 2 3 4 5 6'.split(' ');
 
 const COLORS = 'red white'.split(' ');
@@ -19,7 +21,7 @@ function factory(random) {
     }
 
     const o = {
-      kind: 'dice',
+      kind: KIND,
       image: `assets/gfx/dices/${color}/${face}.png`,
       dimensions: [64, 64],
       data: {
@@ -52,7 +54,7 @@ function factory(random) {
   }
 
   function existingOptions(objs) {
-    if (objs.every(o => o.kind === 'dice')) {
+    if (objs.every(o => o.kind === KIND)) {
       return ['roll', ['set value', FACES]];
     }
   }
@@ -69,7 +71,7 @@ function factory(random) {
   }
 
   function onMenuExisting(o, a, b) {
-    if (o.kind === 'dice') {
+    if (o.kind === KIND) {
       if (a === 'roll') {
         return roll(o);
       }

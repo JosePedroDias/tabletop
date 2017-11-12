@@ -5,12 +5,13 @@ const { menu } = require('./arcMenu');
 const { render, select, renderSelectionBox, W, H } = require('./render');
 
 const card = require('../shared/content/card')(random);
-const counter = require('../shared/content/counter')(random);
+const groupOfCards = require('../shared/content/groupOfCards')(random);
 const dice = require('../shared/content/dice')(random);
-const label = require('../shared/content/label')(random);
-const piece = require('../shared/content/piece')(random);
+// const piece = require('../shared/content/piece')(random);
+// const label = require('../shared/content/label')(random);
+// const counter = require('../shared/content/counter')(random);
 
-const contentTypes = [card, dice, piece, counter, label];
+const contentTypes = [card, groupOfCards, dice /* , piece, counter, label */];
 
 const p2p = require('./p2pfake')(
   // p2p | p2pfake
@@ -46,6 +47,7 @@ function _findObjectById(id) {
     }
   }
 }
+window._findObjectById = _findObjectById; // TODO: KINDA LAME
 
 let isForeign = false;
 
@@ -174,8 +176,8 @@ function publishEvent(ev) {
 }
 
 if (SEARCH.hosting) {
-  card.SUITS.forEach((s, j) => {
-    card.VALUES.forEach((v, i) => {
+  ['h', 's'].forEach((s, j) => {
+    ['2', '3', '4'].forEach((v, i) => {
       const o = card.create({
         value: v,
         suit: s,
@@ -211,9 +213,22 @@ function onMenuDone(parts) {
   } else if (SELECTED_OBJECTS.length === 0) {
     createAction(parts);
   } else {
-    SELECTED_OBJECTS.forEach(o => {
-      changeAction(o, parts);
-    });
+    if (parts[0] === 'group') {
+      const o = groupOfCards.create({ cards: SELECTED_OBJECTS });
+      addObject(o);
+      SELECTED_OBJECTS.forEach(so => {
+        updateObject(so.id, { partOf: o.id });
+      });
+    } else if (parts[0] === 'ungroup') {
+      removeObject(SELECTED_OBJECTS[0].partOf);
+      SELECTED_OBJECTS.forEach(so => {
+        updateObject(so.id, { partOf: undefined });
+      });
+    } else {
+      SELECTED_OBJECTS.forEach(o => {
+        changeAction(o, parts);
+      });
+    }
   }
   menuP = undefined;
 }
@@ -257,9 +272,13 @@ function changeAction(o, parts) {
 
 function menuNew() {
   return contentTypes.reduce((opts, ct) => {
-    const b = opts.slice();
-    b.push(ct.newOptions());
-    return b;
+    const a = ct.newOptions();
+    if (a) {
+      const b = opts.slice();
+      b.push();
+      return b;
+    }
+    return opts;
   }, []);
 }
 
@@ -268,6 +287,20 @@ function menuExisting(objs) {
     (opts, ct) => opts.concat(ct.existingOptions(objs) || []),
     ['remove']
   );
+}
+
+function objInGroup(obj) {
+  const oId = obj.id;
+  const groups = OBJECTS.filter(o => o.kind.indexOf('group') === 0);
+  let group;
+  groups.some(g => {
+    if (g.children.indexOf(oId) !== -1) {
+      group = g;
+      return true;
+    }
+    return false;
+  });
+  return group;
 }
 
 document.addEventListener('keydown', ev => {
@@ -311,8 +344,15 @@ document.addEventListener('mousedown', ev => {
     (SELECTED_OBJECTS.length === 0 ||
       SELECTED_OBJECTS.indexOf(selectedObj) === -1)
   ) {
-    changeObjectIndex(selectedObj.id, OBJECTS.length - 1);
-    SELECTED_OBJECTS = [selectedObj];
+    let group;
+    if ((group = objInGroup(selectedObj))) {
+      // see if selected is in a group. if so, select whole group
+      SELECTED_OBJECTS = group.children.map(id => _findObjectById(id)[0]);
+      changeObjectIndex(group.id, OBJECTS.length - 1);
+    } else {
+      SELECTED_OBJECTS = [selectedObj];
+      changeObjectIndex(selectedObj.id, OBJECTS.length - 1);
+    }
   } else if (SHIFT_IS_DOWN) {
     firstP = p;
   } else if (!selectedObj) {

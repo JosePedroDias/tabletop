@@ -13,6 +13,7 @@ module.exports = {
     'guard-for-in': 0,
     'no-alert': 0,
     'no-bitwise': 0,
+    'no-cond-assign': 0,
     'no-console': 0,
     'no-lonely-if': 0,
     'no-param-reassign': 0,

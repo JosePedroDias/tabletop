@@ -73,4 +73,14 @@ describe('deterministic', () => {
     r.setSeed(33);
     expect(r.int(100)).toBe(57);
   });
+
+  it('shuffleIndices', () => {
+    r.setSeed(42);
+    expect(r.shuffleIndices(4)).toEqual([0, 1, 3, 2]);
+  });
+
+  it('shuffle', () => {
+    r.setSeed(42);
+    expect(r.shuffle(['a', 'b', 'c', 'd'])).toEqual(['a', 'b', 'd', 'c']);
+  });
 });

@@ -25,12 +25,10 @@ function fixQuadOrder(quad) {
 
 function select(objects, quad) {
   quad = fixQuadOrder(quad);
-  return objects.filter(o => {
-    return quad && collision.pointInRect(o.position, quad);
-  });
+  return objects.filter(o => quad && collision.pointInRect(o.position, quad));
 }
 
-function render(objects, selectedObjects) {
+function render(objects = [], selectedObjects = [], allowPartOf = false) {
   let didRender = true;
 
   function tryRerender() {
@@ -42,9 +40,22 @@ function render(objects, selectedObjects) {
   lastAlpha = 1;
   ctx.globalAlpha = 1;
   ctx.fillStyle = BG_COLOR;
-  ctx.fillRect(0, 0, W, H);
+
+  if (!allowPartOf) {
+    ctx.fillRect(0, 0, W, H);
+  }
 
   objects.forEach(o => {
+    if (!allowPartOf && o.partOf) {
+      return;
+    }
+
+    if (o.kind.indexOf('group') === 0) {
+      const children = o.children.map(id => window._findObjectById(id)[0]);
+      const isSelected = selectedObjects.indexOf(children[0]) !== -1;
+      return render(children, isSelected ? children : [], true);
+    }
+
     const imgUrl = o.image;
     let imgEl;
 

@@ -2,12 +2,16 @@ const defaultObject = require('./default');
 
 const utils = require('../utils');
 
+// CONSTS
+
+const KIND = 'label';
+
 // FACTORY
 
 function factory(/* random */) {
   function create({ text, color = '#FFF' } = {}) {
     const o = {
-      kind: 'label',
+      kind: KIND,
       text,
       color,
       data: {
@@ -38,7 +42,7 @@ function factory(/* random */) {
   }
 
   function existingOptions(objs) {
-    if (objs.every(o => o.kind === 'label')) {
+    if (objs.every(o => o.kind === KIND)) {
       return ['set text'];
     }
   }
@@ -52,7 +56,7 @@ function factory(/* random */) {
   }
 
   function onMenuExisting(o /* , a, b */) {
-    if (o.kind === 'label') {
+    if (o.kind === KIND) {
       return setText(utils.promptValue(o.data.text));
     }
   }

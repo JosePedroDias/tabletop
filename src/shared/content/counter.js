@@ -2,12 +2,15 @@ const defaultObject = require('./default');
 
 const utils = require('../utils');
 
+// CONSTS
+const KIND = 'counter';
+
 // FACTORY
 
 function factory(/* random */) {
   function create({ value = 0, color = '#FFF' } = {}) {
     const o = {
-      kind: 'counter',
+      kind: KIND,
       text: value,
       color,
       data: {
@@ -48,7 +51,7 @@ function factory(/* random */) {
   }
 
   function existingOptions(objs) {
-    if (objs.every(o => o.kind === 'counter')) {
+    if (objs.every(o => o.kind === KIND)) {
       return [
         '=0',
         '+1',
@@ -68,7 +71,7 @@ function factory(/* random */) {
   }
 
   function onMenuExisting(o, a, b) {
-    if (o.kind === 'counter') {
+    if (o.kind === KIND) {
       switch (a) {
         case '+1':
           return increment(o);
