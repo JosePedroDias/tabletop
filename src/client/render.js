@@ -131,7 +131,7 @@ function renderSelectionBox(quad) {
   const [q0, q1] = quad;
   if (quad && q0) {
     ctx.globalAlpha = 0.5;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2;
     ctx.strokeStyle = '#FF0';
     ctx.beginPath();
     ctx.rect(q0[0], q0[1], q1[0] - q0[0], q1[1] - q0[1]);

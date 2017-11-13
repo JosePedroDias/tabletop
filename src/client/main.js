@@ -6,12 +6,12 @@ const { render, select, renderSelectionBox, W, H } = require('./render');
 
 const card = require('../shared/content/card')(random);
 const groupOfCards = require('../shared/content/groupOfCards')(random);
-const dice = require('../shared/content/dice')(random);
+// const dice = require('../shared/content/dice')(random);
 // const piece = require('../shared/content/piece')(random);
 // const label = require('../shared/content/label')(random);
 // const counter = require('../shared/content/counter')(random);
 
-const contentTypes = [card, groupOfCards, dice /* , piece, counter, label */];
+const contentTypes = [card, groupOfCards /* dice , piece, counter, label */];
 
 const p2p = require('./p2pfake')(
   // p2p | p2pfake
@@ -47,7 +47,7 @@ function _findObjectById(id) {
     }
   }
 }
-window._findObjectById = _findObjectById; // TODO: KINDA LAME
+window._findObjectById = _findObjectById; // TODO: LAME
 
 let isForeign = false;
 
@@ -67,6 +67,7 @@ function addObject(o) {
 
   return o.id;
 }
+window.addObject = addObject; // TODO: LAME
 
 function updateObject(id, partialO) {
   const pair = _findObjectById(id);
@@ -87,6 +88,7 @@ function updateObject(id, partialO) {
     });
   }
 }
+window.updateObject = updateObject; // TODO: lame
 
 function changeObjectIndex(id, index) {
   const pair = _findObjectById(id);
@@ -104,6 +106,10 @@ function changeObjectIndex(id, index) {
       data: index
     });
   }
+}
+
+function toTop(id) {
+  changeObjectIndex(id, OBJECTS.length - 1);
 }
 
 function removeObject(id) {
@@ -223,11 +229,19 @@ function onMenuDone(parts) {
       removeObject(SELECTED_OBJECTS[0].partOf);
       SELECTED_OBJECTS.forEach(so => {
         updateObject(so.id, { partOf: undefined });
+        toTop(so.id);
       });
     } else {
-      SELECTED_OBJECTS.forEach(o => {
-        changeAction(o, parts);
-      });
+      if (
+        SELECTED_OBJECTS[0].partOf &&
+        ['shuffle', 'align'].indexOf(parts[0]) !== -1
+      ) {
+        changeAction(SELECTED_OBJECTS[0], parts);
+      } else {
+        SELECTED_OBJECTS.forEach(o => {
+          changeAction(o, parts);
+        });
+      }
     }
   }
   menuP = undefined;
@@ -238,6 +252,7 @@ function createAction(parts) {
 
   contentTypes.some(ct => {
     const o = ct.onMenuNew(a, b, c, d);
+    console.log(menuP);
     if (o) {
       o.scale = 0.5;
       o.position = menuP.slice();
@@ -326,12 +341,15 @@ document.addEventListener('mousedown', ev => {
   if (ev.button === 2) {
     menuP = p;
     const opts = selectedObj ? menuExisting(SELECTED_OBJECTS) : menuNew();
+    console.log('opts', opts);
     if (opts && opts.length > 0) {
       menu({
         center: p,
         options: opts,
         onClick: onMenuDone
       });
+    } else {
+      menuP = undefined;
     }
 
     return false;
@@ -348,10 +366,10 @@ document.addEventListener('mousedown', ev => {
     if ((group = objInGroup(selectedObj))) {
       // see if selected is in a group. if so, select whole group
       SELECTED_OBJECTS = group.children.map(id => _findObjectById(id)[0]);
-      changeObjectIndex(group.id, OBJECTS.length - 1);
+      toTop(group.id);
     } else {
       SELECTED_OBJECTS = [selectedObj];
-      changeObjectIndex(selectedObj.id, OBJECTS.length - 1);
+      toTop(selectedObj.id);
     }
   } else if (SHIFT_IS_DOWN) {
     firstP = p;
