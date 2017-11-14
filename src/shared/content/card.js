@@ -56,7 +56,7 @@ function factory(random) {
       image: o.image2,
       image2: o.image,
       data: {
-        suite: o.data.suite,
+        suit: o.data.suit,
         value: o.data.value,
         isJoker: o.data.isJoker,
         isFlipped: !o.data.isFlipped
