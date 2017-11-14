@@ -1,6 +1,5 @@
 const defaultObject = require('./default');
-
-const card = require('./card');
+const _card_ = require('./card');
 
 // CONSTS
 
@@ -9,6 +8,8 @@ const KIND = 'groupOfCards';
 // FACTORY
 
 function factory(random) {
+  const card = _card_(random);
+
   function create({ cards } = {}) {
     const o = {
       kind: KIND,
@@ -74,7 +75,7 @@ function factory(random) {
   // OPTIONS
 
   function newOptions() {
-    return ['add deck'];
+    return 'add deck';
   }
 
   function existingOptions(objs) {
@@ -97,12 +98,15 @@ function factory(random) {
             isFlipped: true
           });
           o.scale = 0.5;
-          o.position = [0, 0];
+          o.position = [200, 200]; // TODO: which pos?
           window.addObject(o);
           cards.push(o);
         });
       }); // TODO: select cards
-      return create({ cards });
+      const g = create({ cards });
+      g.id = random.id(6);
+      cards.forEach(c => window.updateObject(c.id, { partOf: g.id }));
+      return g;
     }
   }
 

@@ -226,11 +226,15 @@ function onMenuDone(parts) {
         updateObject(so.id, { partOf: o.id });
       });
     } else if (parts[0] === 'ungroup') {
-      removeObject(SELECTED_OBJECTS[0].partOf);
+      const gId = SELECTED_OBJECTS[0].partOf;
+      const g = _findObjectById(gId)[0];
+      SELECTED_OBJECTS = g.children.map(id => _findObjectById(id)[0]);
+      removeObject(gId);
       SELECTED_OBJECTS.forEach(so => {
         updateObject(so.id, { partOf: undefined });
         toTop(so.id);
       });
+      render(OBJECTS);
     } else {
       if (
         SELECTED_OBJECTS[0].partOf &&
@@ -289,9 +293,7 @@ function menuNew() {
   return contentTypes.reduce((opts, ct) => {
     const a = ct.newOptions();
     if (a) {
-      const b = opts.slice();
-      b.push();
-      return b;
+      opts.push(a);
     }
     return opts;
   }, []);
@@ -341,7 +343,6 @@ document.addEventListener('mousedown', ev => {
   if (ev.button === 2) {
     menuP = p;
     const opts = selectedObj ? menuExisting(SELECTED_OBJECTS) : menuNew();
-    console.log('opts', opts);
     if (opts && opts.length > 0) {
       menu({
         center: p,

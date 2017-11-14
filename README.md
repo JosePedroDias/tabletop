@@ -21,7 +21,7 @@ I'm trying to depend the very least on both the platform and the language,
 so relying on canvas for rendering. The idea is to be able to port this without much effort.
 
 ## TODO
-* fix create menu, fix bug on flip group sometimes failing
+* fix bug on flip group failing
 * zones (bags of objects, aligning positioning by stacking or placing in linear direction)
 * camera support (position, rotation, scale)
 
